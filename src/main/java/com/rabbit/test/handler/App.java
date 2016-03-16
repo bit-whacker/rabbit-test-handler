@@ -11,33 +11,28 @@ import com.rabbit.test.handler.rabbitmq.RabbitGateManager;
  * Hello world!
  *
  */
-public class App 
-{
+public class App {
+    
     private static Logger LOG = LogManager.getRootLogger();
-    
-    private RabbitConnectionManager rabbitConnectionManager;
-    public static void main( String[] args )
-    {
-        System.out.println( "Initializing Rabbit Request Handler" );
-        (new App()).init();
+    private RabbitConnectionManager rcm;
+
+    public static void main(String[] args) throws InterruptedException{
+        (new App()).initPro();
     }
-    private void init(){
-        rabbitConnectionManager = RabbitGateManager.getInstance().getRabbitConnectionManager();
-        try {
-            LOG.debug("waiting for five seconds...");
-            Thread.sleep(5 * 1000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+
+    public void initPro() throws InterruptedException {
+        rcm = RabbitGateManager.getInstance().getRabbitConnectionManager();
+        Thread.sleep(3000);
+        
+        LOG.debug("rabbitConnectionManager is getting ready!");
         sleepUntilRabbitConnectionSucceed();
-        LOG.info("Rabbit connection is ready now!");
+        
+        LOG.debug("rabbitConnectionManager is ready to handle messages :D");
     }
-    
+
     private void sleepUntilRabbitConnectionSucceed() {
         for (;;) {
-            RabbitMessageConsumer rConsumer = rabbitConnectionManager
-                    .getRabbitMessageConsumer();
+            RabbitMessageConsumer rConsumer = rcm.getRabbitMessageConsumer();
             if (rConsumer == null) {
                 LOG.info("rConsumer is null. Rabbit connection is not ready yeat");
                 try {
@@ -51,5 +46,5 @@ public class App
         }
 
     }
-    
+
 }

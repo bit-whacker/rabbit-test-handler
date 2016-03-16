@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.lacheff.commonutil.rabbitmq.RabbitGate;
 import com.lacheff.commonutil.rabbitmq.RabbitMessageHander;
 import com.lacheff.commonutil.rabbitmq.request.NlpProcessingRequest;
 import com.lacheff.commonutil.rabbitmq.request.NlpSummarizationRequest;
@@ -17,16 +16,11 @@ import com.lacheff.commonutil.rabbitmq.support.ExchangeType;
 import com.lacheff.commonutil.rabbitmq.support.RoutingKey;
 
 public class NlpProcessingRequestHandler implements RabbitMessageHander {
-    private static Logger LOG = LogManager.getLogger(NlpProcessingRequestHandler.class);
-
-
-
-	private RabbitGate rabbitGate = RabbitGateManager.getInstance().getRabbitGate();
+    private static Logger LOG = LogManager.getRootLogger();
 
 	@Override
 	public void handle(Object object) {
-		LOG.info("Seeing this in the log means that message was send and received");
-
+		
 		if (object instanceof NlpProcessingRequest) {
 			handleNlpProcessingRequest((NlpProcessingRequest) object);
 		} else if (object instanceof NlpSummarizationRequest){
@@ -38,13 +32,14 @@ public class NlpProcessingRequestHandler implements RabbitMessageHander {
 	}
 
 	private void handleNlpProcessingRequest(NlpProcessingRequest nlpProcessingRequest) {
-		LOG.info("Got processing request: {}", nlpProcessingRequest.getReviewUUID());
+		LOG.info("[x] Got processing request: {}", nlpProcessingRequest);
 		try {
 
 			NlpProcessingResponse nlpProcessingResponse = new NlpProcessingResponse();
-			nlpProcessingResponse.setReviewUUID(new Date() + "");
-			LOG.debug("Shipping response after NLP processing: {}", nlpProcessingResponse);
-			rabbitGate.send(nlpProcessingResponse);
+			nlpProcessingResponse.setReviewUUID(nlpProcessingRequest.getReviewUUID());
+			
+			LOG.info("Shipping response after NLP processing: {}", nlpProcessingResponse);
+			RabbitGateManager.getInstance().getRabbitGate().send(nlpProcessingResponse);
 			
 		} catch (Exception ex) {
 			LOG.error("Exception at handleNlpProcessingRequest:", ex);
@@ -52,10 +47,17 @@ public class NlpProcessingRequestHandler implements RabbitMessageHander {
 	}
 	
 	private void handleNlpSummarizationRequest(NlpSummarizationRequest nlpSummarizationRequest){
-	    LOG.debug("Sending response after NLP Summarization Request");
-	    NlpSummarizationResponse nlpSummarizationResponse = new NlpSummarizationResponse();
-	    nlpSummarizationResponse.setRequestUUID(new Date() + "");
-	    rabbitGate.send(nlpSummarizationResponse);
+	    LOG.info("[x] Got nlpSummarization request: {}", nlpSummarizationRequest);
+	    try{
+    	    NlpSummarizationResponse nlpSummarizationResponse = new NlpSummarizationResponse();
+    	    nlpSummarizationResponse.setRequestUUID(new Date() + "");
+    	    
+    	    LOG.info("Shipping response after NLP Summarization: {}", nlpSummarizationResponse);
+    	    RabbitGateManager.getInstance().getRabbitGate().send(nlpSummarizationResponse);
+    	    
+	    } catch (Exception ex) {
+            LOG.error("Exception at handleSummarizationRequest:", ex);
+        }
 	}
 	
 	@Override
